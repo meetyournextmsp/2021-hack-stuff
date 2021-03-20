@@ -13,10 +13,12 @@ object MakeLookup {
         constituency.cache()
         region.createOrReplaceTempView("region")
         region.cache()
+        val newPostcodes = udf((i: String) => i.toLowerCase.replaceAll("\\s", "")).apply(col("Postcode"))
         smallUser
             .join(constituency, constituency.col("ScottishParliamentaryConstituency2014Code") === smallUser.col("ScottishParliamentaryConstituency2014Code"))
             .join(region, region.col("ScottishParliamentaryRegion2014Code") === smallUser.col("ScottishParliamentaryRegion2014Code"))
             .select(smallUser.col("Postcode"), region.col("ScottishParliamentaryRegion2014Name"), constituency.col("ScottishParliamentaryConstituency2014Name"))
+            .withColumn("Postcode", newPostcodes)
             .coalesce(1)
             .write
             .option("header", "true")
